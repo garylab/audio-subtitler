@@ -41,10 +41,11 @@ ENV WHISPER_MODEL=${WHISPER_MODEL}
 ENV WHISPER_DEVICE=${WHISPER_DEVICE}
 ENV WHISPER_COMPUTE_TYPE=${WHISPER_COMPUTE_TYPE}
 
-# Download model while building the image (set LOCAL_FILES_ONLY=false to allow download)
-RUN LOCAL_FILES_ONLY=false python -c "from src.runpod_handler import audio2vtt; print('Model downloaded successfully')"
+# Download model while building the image (use CPU for download, CUDA not available during build)
+RUN python -c "import os; from faster_whisper import WhisperModel; WhisperModel(os.environ.get('WHISPER_MODEL', 'large-v3'), device='cpu', download_root='models'); print('Model downloaded successfully')"
 
 # Set to true for runtime (use cached model only)
 ENV LOCAL_FILES_ONLY=true
+ENV DOWNLOAD_ROOT=models
 
 CMD ["python", "-u", "src/runpod_handler.py"]
