@@ -34,15 +34,21 @@ def get_subtitler():
 
 def handler(event):
     job_input = event.get("input", {})
+    
+    # Health check / ping - return immediately
+    if job_input.get("ping"):
+        return {"status": "ok", "model": MODEL_SIZE_OR_PATH}
+    
     audio_base64 = job_input.get("audio")
     format = job_input.get("format", "vtt")
+    
     if not audio_base64:
-        return {"error": "No audio data provided. Please provide 'audio' field with base64 encoded audio data."}
+        return {"status": "error", "message": "No audio data provided. Please provide 'audio' field with base64 encoded audio data."}
     
     try:
         audio_data = base64.b64decode(audio_base64)
     except Exception as e:
-        return {"error": f"Failed to decode base64 audio data: {str(e)}"}
+        return {"status": "error", "message": f"Failed to decode base64 audio data: {str(e)}"}
 
     try:
         transcribe_kwargs = {
@@ -56,14 +62,14 @@ def handler(event):
             transcribe_kwargs["condition_on_previous_text"] = False
             transcribe_kwargs["vad_filter"] = False
         
-        return get_subtitler().transcribe(io.BytesIO(audio_data), **transcribe_kwargs)
+        result = get_subtitler().transcribe(io.BytesIO(audio_data), **transcribe_kwargs)
+        return {"status": "ok", "output": result}
     except Exception as e:
-        return {"error": f"Transcription failed: {str(e)}"}
+        return {"status": "error", "message": f"Transcription failed: {str(e)}"}
 
 
 if __name__ == '__main__':
-    # Pre-load model at startup so it's ready for RunPod health checks
-    print("Loading model...")
-    get_subtitler()
-    print("Model loaded, starting handler...")
+    # Start handler immediately - model loads on first request
+    # Pre-loading can cause timeout during RunPod's init test
+    print(f"Starting handler (model: {MODEL_SIZE_OR_PATH}, will load on first request)...")
     runpod.serverless.start({'handler': handler})
