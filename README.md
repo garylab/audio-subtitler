@@ -89,7 +89,7 @@ Parameters:
 - `audio`: File path (str), file object (BinaryIO), or numpy array
 - `format`: "vtt" or "srt" (default: "vtt")
 - `**kwargs`: All [faster-whisper transcribe](https://github.com/SYSTRAN/faster-whisper#transcribe) parameters
-  - `language`, `beam_size`, `vad_filter`, `vad_parameters`, `word_timestamps`, etc.
+  - `language`, `beam_size`, `vad_parameters`, `word_timestamps`, etc.
 
 Returns:
 ```python

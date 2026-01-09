@@ -103,20 +103,6 @@ Examples:
     )
     
     parser.add_argument(
-        "--vad-filter",
-        type=lambda x: x.lower() == 'true',
-        default=True,
-        metavar="BOOL",
-        help="Enable voice activity detection (default: true)",
-    )
-    
-    parser.add_argument(
-        "--filler-words",
-        action="store_true",
-        help="Include filler words (um, uh, er, 呃, 啊, etc.) in transcription",
-    )
-    
-    parser.add_argument(
         "--cpu-threads",
         type=int,
         default=4,
@@ -193,13 +179,13 @@ Examples:
         transcribe_kwargs = {
             "format": args.format,
             "beam_size": args.beam_size,
-            "vad_filter": args.vad_filter,
+            "vad_filter": True,
         }
         
         if args.language:
             transcribe_kwargs["language"] = args.language
         
-        if args.filler_words:
+        if args.format == "json":
             transcribe_kwargs["condition_on_previous_text"] = False
             transcribe_kwargs["vad_filter"] = False
         

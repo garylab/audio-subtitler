@@ -21,7 +21,6 @@ def handler(event):
     job_input = event.get("input", {})
     audio_base64 = job_input.get("audio")
     format = job_input.get("format", "vtt")
-    filler_words = job_input.get("filler_words", False)
     if not audio_base64:
         return {"error": "No audio data provided. Please provide 'audio' field with base64 encoded audio data."}
     
@@ -34,10 +33,10 @@ def handler(event):
         transcribe_kwargs = {
             "format": format,
             "beam_size": int(os.getenv("WHISPER_BEAM_SIZE", "5")),
-            "vad_filter": os.getenv("WHISPER_VAD_FILTER", "true").lower() == "true",
+            "vad_filter": True,
         }
         
-        if filler_words:
+        if format == "json":
             transcribe_kwargs["suppress_tokens"] = []
             transcribe_kwargs["condition_on_previous_text"] = False
             transcribe_kwargs["vad_filter"] = False

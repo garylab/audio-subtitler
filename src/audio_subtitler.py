@@ -28,15 +28,17 @@ class AudioSubtitler:
         **kwargs
     ) -> str:
         kwargs.setdefault("word_timestamps", True)
-        kwargs.setdefault("vad_filter", True)
         kwargs.setdefault("vad_parameters", {"min_silence_duration_ms": 500})
         
-        segments, _ = self.model.transcribe(audio=audio, **kwargs)
+        segments, info = self.model.transcribe(audio=audio, **kwargs)
         
-        # For JSON format, return original Whisper segments as JSON string
+        # For JSON format, return detailed Whisper segments as JSON string
         if format == "json":
-            segments_list = [
-                {
+            segments_list = []
+            for segment in segments:
+                segment_data = {
+                    "id": segment.id,
+                    "seek": segment.seek,
                     "start": segment.start,
                     "end": segment.end,
                     "text": segment.text,
@@ -44,12 +46,9 @@ class AudioSubtitler:
                         {"start": w.start, "end": w.end, "word": w.word, "probability": w.probability}
                         for w in (segment.words or [])
                     ],
-                    "avg_logprob": segment.avg_logprob,
-                    "no_speech_prob": segment.no_speech_prob,
                 }
-                for segment in segments
-            ]
-            return json.dumps(segments_list, ensure_ascii=False, indent=2)
+                segments_list.append(segment_data)
+            return json.dumps(segments_list, ensure_ascii=False)
         
         subtitles = self.segments_to_subtitle(segments)
         return self._format_subtitles(subtitles, format)
