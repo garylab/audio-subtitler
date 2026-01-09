@@ -2,6 +2,7 @@
 """Command-line interface for audio-subtitler."""
 
 import sys
+import json
 import argparse
 from pathlib import Path
 
@@ -55,8 +56,8 @@ Examples:
         "-f", "--format",
         type=str,
         default="vtt",
-        choices=["vtt", "srt"],
-        help="Subtitle format (default: vtt)",
+        choices=["vtt", "srt", "json"],
+        help="Output format (default: vtt)",
     )
     
     parser.add_argument(
@@ -149,6 +150,8 @@ Examples:
             args.format = "srt"
         elif output_ext == ".vtt":
             args.format = "vtt"
+        elif output_ext == ".json":
+            args.format = "json"
     
     # Validate input file
     input_path = Path(args.input)
@@ -191,8 +194,13 @@ Examples:
         
         # Transcribe
         result = converter.transcribe(args.input, **transcribe_kwargs)
-        content = result["content"]
         word_count = result["word_count"]
+        
+        # For JSON format, serialize content to JSON string
+        if args.format == "json":
+            content = json.dumps(result["content"], ensure_ascii=False, indent=2)
+        else:
+            content = result["content"]
         
         if not args.quiet:
             print(f"Transcription complete: {word_count} words", file=sys.stderr)
@@ -205,7 +213,7 @@ Examples:
                 print(f"Output written to: {args.output}", file=sys.stderr)
         else:
             # Output to stdout for piping
-            print(content, end="")
+            print(content)
     
     except KeyboardInterrupt:
         print("\nInterrupted by user", file=sys.stderr)

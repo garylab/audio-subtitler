@@ -12,7 +12,7 @@ STOP_CHARS = set(
     "⸮⁇⁈⁉"
 )
 
-SubtitleFormat = Literal["vtt", "srt"]
+SubtitleFormat = Literal["vtt", "srt", "json"]
 
 
 class AudioSubtitler:
@@ -30,8 +30,31 @@ class AudioSubtitler:
         kwargs.setdefault("vad_parameters", {"min_silence_duration_ms": 500})
         
         segments, _ = self.model.transcribe(audio=audio, **kwargs)
-        subtitles, word_count = self.segments_to_subtitle(segments)
         
+        # For JSON format, return original Whisper segments directly
+        if format == "json":
+            segments_list = []
+            word_count = 0
+            for segment in segments:
+                word_count += len(segment.words) if segment.words else 0
+                segments_list.append({
+                    "start": segment.start,
+                    "end": segment.end,
+                    "text": segment.text,
+                    "words": [
+                        {"start": w.start, "end": w.end, "word": w.word, "probability": w.probability}
+                        for w in (segment.words or [])
+                    ],
+                    "avg_logprob": segment.avg_logprob,
+                    "no_speech_prob": segment.no_speech_prob,
+                })
+            return {
+                "content": segments_list,
+                "format": format,
+                "word_count": word_count,
+            }
+        
+        subtitles, word_count = self.segments_to_subtitle(segments)
         content = self._format_subtitles(subtitles, format)
         
         return {
