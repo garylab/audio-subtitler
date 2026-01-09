@@ -24,8 +24,8 @@ def get_subtitler():
             device="cuda",
             device_index=[int(i) for i in os.getenv("WHISPER_DEVICE_INDEX", "0").split(",")],
             compute_type=os.getenv("WHISPER_COMPUTE_TYPE", "float16"),
-            cpu_threads=os.getenv("WHISPER_CPU_THREADS", "4"),
-            num_workers=os.getenv("WHISPER_NUM_WORKERS", "1"),
+            cpu_threads=int(os.getenv("WHISPER_CPU_THREADS", "4")),
+            num_workers=int(os.getenv("WHISPER_NUM_WORKERS", "1")),
             download_root=DOWNLOAD_ROOT,
             local_files_only=True,
         )
@@ -62,4 +62,8 @@ def handler(event):
 
 
 if __name__ == '__main__':
+    # Pre-load model at startup so it's ready for RunPod health checks
+    print("Loading model...")
+    get_subtitler()
+    print("Model loaded, starting handler...")
     runpod.serverless.start({'handler': handler})
