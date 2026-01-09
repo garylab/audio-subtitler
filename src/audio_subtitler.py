@@ -36,18 +36,16 @@ class AudioSubtitler:
         if format == "json":
             segments_list = []
             for segment in segments:
-                segment_data = {
+                segments_list.append({
                     "id": segment.id,
-                    "seek": segment.seek,
                     "start": segment.start,
                     "end": segment.end,
                     "text": segment.text,
                     "words": [
                         {"start": w.start, "end": w.end, "word": w.word, "probability": w.probability}
-                        for w in (segment.words or [])
+                        for w in segment.words
                     ],
-                }
-                segments_list.append(segment_data)
+                })
             return json.dumps(segments_list, ensure_ascii=False)
         
         subtitles = self.segments_to_subtitle(segments)
