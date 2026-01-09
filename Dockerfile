@@ -25,12 +25,12 @@ RUN ln -s /usr/bin/python3.12 /usr/bin/python
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /workspace
-ENV PYTHONPATH="${PYTHONPATH}:."
+ENV PYTHONPATH="."
 
 COPY pyproject.toml .
 COPY uv.lock .
 
-RUN uv pip install --system -r pyproject.toml
+RUN uv pip install --system -r pyproject.toml && uv pip install --system runpod>=1.7.0
 COPY src/ src/
 
 # Default Whisper model to large-v3
