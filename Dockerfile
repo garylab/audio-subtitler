@@ -1,28 +1,20 @@
-FROM nvidia/cuda:12.3.2-cudnn9-devel-ubuntu22.04
+FROM nvidia/cuda:12.3.2-cudnn9-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
-# Add deadsnakes PPA for Python 3.12
-RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-    python3.12 \
-    python3.12-dev \
-    python3-pip \
-    build-essential \
-    media-types \
-    libmagic1 \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
     ffmpeg \
     ca-certificates \
-    git \
+    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN ln -s /usr/bin/python3.12 /usr/bin/python
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
 
 WORKDIR /workspace
 ENV PYTHONPATH="."
@@ -30,22 +22,11 @@ ENV PYTHONPATH="."
 COPY pyproject.toml .
 COPY uv.lock .
 
-RUN uv pip install --system -r pyproject.toml && uv pip install --system runpod>=1.7.0
+RUN uv pip install --system -r pyproject.toml && uv pip install --system runpod>=1.8.1
 COPY src/ src/
 
-# Default Whisper model to large-v3
-ARG WHISPER_MODEL=large-v3
-ARG WHISPER_DEVICE=cuda
-ARG WHISPER_COMPUTE_TYPE=float16
-ENV WHISPER_MODEL=${WHISPER_MODEL}
-ENV WHISPER_DEVICE=${WHISPER_DEVICE}
-ENV WHISPER_COMPUTE_TYPE=${WHISPER_COMPUTE_TYPE}
-
 # Download model while building the image (use CPU for download, CUDA not available during build)
-RUN python -c "import os; from faster_whisper import WhisperModel; WhisperModel(os.environ.get('WHISPER_MODEL', 'large-v3'), device='cpu', download_root='models'); print('Model downloaded successfully')"
+RUN python -c "from src.runpod_handler import download_model; download_model(); print('Model downloaded successfully')"
 
-# Set to true for runtime (use cached model only)
-ENV LOCAL_FILES_ONLY=true
-ENV DOWNLOAD_ROOT=models
 
 CMD ["python", "-u", "src/runpod_handler.py"]
