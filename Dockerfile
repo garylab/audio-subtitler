@@ -26,7 +26,7 @@ RUN uv pip install --system -r pyproject.toml && uv pip install --system runpod>
 COPY src/ src/
 
 # Download model while building the image (use CPU for download, CUDA not available during build)
-RUN python -c "from src.runpod_handler import download_model; download_model(); print('Model downloaded successfully')"
+RUN python -c "from src.runpod_handler import download_model; download_model(); print('Model downloaded.')"
 
 
 CMD ["python", "-u", "src/runpod_handler.py"]

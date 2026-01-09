@@ -69,7 +69,4 @@ def handler(event):
 
 
 if __name__ == '__main__':
-    # Start handler immediately - model loads on first request
-    # Pre-loading can cause timeout during RunPod's init test
-    print(f"Starting handler (model: {MODEL_SIZE_OR_PATH}, will load on first request)...")
     runpod.serverless.start({'handler': handler})
