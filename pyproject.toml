@@ -53,5 +53,5 @@ build-backend = "setuptools.build_meta"
 version_scheme = "post-release"
 local_scheme = "no-local-version"
 
-[tool.hatch.build.targets.wheel]
+[tool.setuptools]
 packages = ["src"]
