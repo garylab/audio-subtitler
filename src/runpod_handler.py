@@ -21,6 +21,7 @@ def handler(event):
     job_input = event.get("input", {})
     audio_base64 = job_input.get("audio")
     format = job_input.get("format", "vtt")
+    filler_words = job_input.get("filler_words", False)
     if not audio_base64:
         return {"error": "No audio data provided. Please provide 'audio' field with base64 encoded audio data."}
     
@@ -29,13 +30,19 @@ def handler(event):
     except Exception as e:
         return {"error": f"Failed to decode base64 audio data: {str(e)}"}
 
-    try:    
-        return audio2vtt.transcribe(
-            io.BytesIO(audio_data),
-            format=format,
-            beam_size=os.getenv("WHISPER_BEAM_SIZE", "5"),
-            vad_filter=os.getenv("WHISPER_VAD_FILTER", "true").lower() == "true",
-        )
+    try:
+        transcribe_kwargs = {
+            "format": format,
+            "beam_size": int(os.getenv("WHISPER_BEAM_SIZE", "5")),
+            "vad_filter": os.getenv("WHISPER_VAD_FILTER", "true").lower() == "true",
+        }
+        
+        if filler_words:
+            transcribe_kwargs["suppress_tokens"] = []
+            transcribe_kwargs["condition_on_previous_text"] = False
+            transcribe_kwargs["vad_filter"] = False
+        
+        return audio2vtt.transcribe(io.BytesIO(audio_data), **transcribe_kwargs)
     except Exception as e:
         return {"error": f"Transcription failed: {str(e)}"}
 

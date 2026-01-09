@@ -2,7 +2,6 @@
 """Command-line interface for audio-subtitler."""
 
 import sys
-import json
 import argparse
 from pathlib import Path
 
@@ -104,9 +103,17 @@ Examples:
     )
     
     parser.add_argument(
-        "--no-vad",
+        "--vad-filter",
+        type=lambda x: x.lower() == 'true',
+        default=True,
+        metavar="BOOL",
+        help="Enable voice activity detection (default: true)",
+    )
+    
+    parser.add_argument(
+        "--filler-words",
         action="store_true",
-        help="Disable voice activity detection",
+        help="Include filler words (um, uh, er, 呃, 啊, etc.) in transcription",
     )
     
     parser.add_argument(
@@ -186,24 +193,21 @@ Examples:
         transcribe_kwargs = {
             "format": args.format,
             "beam_size": args.beam_size,
-            "vad_filter": not args.no_vad,
+            "vad_filter": args.vad_filter,
         }
         
         if args.language:
             transcribe_kwargs["language"] = args.language
         
-        # Transcribe
-        result = converter.transcribe(args.input, **transcribe_kwargs)
-        word_count = result["word_count"]
+        if args.filler_words:
+            transcribe_kwargs["condition_on_previous_text"] = False
+            transcribe_kwargs["vad_filter"] = False
         
-        # For JSON format, serialize content to JSON string
-        if args.format == "json":
-            content = json.dumps(result["content"], ensure_ascii=False, indent=2)
-        else:
-            content = result["content"]
+        # Transcribe
+        content = converter.transcribe(args.input, **transcribe_kwargs)
         
         if not args.quiet:
-            print(f"Transcription complete: {word_count} words", file=sys.stderr)
+            print(f"Transcription complete", file=sys.stderr)
         
         # Output to file or stdout
         if args.output:

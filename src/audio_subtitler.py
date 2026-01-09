@@ -1,5 +1,7 @@
+import json
+
 from faster_whisper import WhisperModel
-from typing import BinaryIO, Union, Tuple, List, Dict, Any, Literal
+from typing import BinaryIO, Union, List, Dict, Any, Literal
 import numpy as np
 
 STOP_CHARS = set(
@@ -24,20 +26,17 @@ class AudioSubtitler:
         audio: Union[str, BinaryIO, np.ndarray],
         format: SubtitleFormat = "vtt",
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> str:
         kwargs.setdefault("word_timestamps", True)
         kwargs.setdefault("vad_filter", True)
         kwargs.setdefault("vad_parameters", {"min_silence_duration_ms": 500})
         
         segments, _ = self.model.transcribe(audio=audio, **kwargs)
         
-        # For JSON format, return original Whisper segments directly
+        # For JSON format, return original Whisper segments as JSON string
         if format == "json":
-            segments_list = []
-            word_count = 0
-            for segment in segments:
-                word_count += len(segment.words) if segment.words else 0
-                segments_list.append({
+            segments_list = [
+                {
                     "start": segment.start,
                     "end": segment.end,
                     "text": segment.text,
@@ -47,21 +46,13 @@ class AudioSubtitler:
                     ],
                     "avg_logprob": segment.avg_logprob,
                     "no_speech_prob": segment.no_speech_prob,
-                })
-            return {
-                "content": segments_list,
-                "format": format,
-                "word_count": word_count,
-            }
+                }
+                for segment in segments
+            ]
+            return json.dumps(segments_list, ensure_ascii=False, indent=2)
         
-        subtitles, word_count = self.segments_to_subtitle(segments)
-        content = self._format_subtitles(subtitles, format)
-        
-        return {
-            "content": content,
-            "format": format,
-            "word_count": word_count
-        }
+        subtitles = self.segments_to_subtitle(segments)
+        return self._format_subtitles(subtitles, format)
     
     def _format_subtitles(self, subtitles: List[Dict], format: SubtitleFormat) -> str:
         items = []
@@ -84,12 +75,10 @@ class AudioSubtitler:
         else:
             return "\n".join(items)
 
-    def segments_to_subtitle(self, segments) -> Tuple[List[Dict], int]:
+    def segments_to_subtitle(self, segments) -> List[Dict]:
         subtitles = []
-        word_count = 0
         
         for segment in segments:
-            word_count += len(segment.words)
             words_idx = 0
             words_len = len(segment.words)
 
@@ -138,7 +127,7 @@ class AudioSubtitler:
                     {"msg": seg_text, "start_time": seg_start, "end_time": seg_end}
                 )
 
-        return subtitles, word_count
+        return subtitles
 
 
     def _seconds_to_time(self, seconds: float, separator: str = ".") -> str:
