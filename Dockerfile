@@ -41,7 +41,10 @@ ENV WHISPER_MODEL=${WHISPER_MODEL}
 ENV WHISPER_DEVICE=${WHISPER_DEVICE}
 ENV WHISPER_COMPUTE_TYPE=${WHISPER_COMPUTE_TYPE}
 
-# Download model while building the image
-RUN python src/runpod_handler.py
+# Download model while building the image (set LOCAL_FILES_ONLY=false to allow download)
+RUN LOCAL_FILES_ONLY=false python -c "from src.runpod_handler import audio2vtt; print('Model downloaded successfully')"
+
+# Set to true for runtime (use cached model only)
+ENV LOCAL_FILES_ONLY=true
 
 CMD ["python", "-u", "src/runpod_handler.py"]
