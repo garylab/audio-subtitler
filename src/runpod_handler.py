@@ -2,23 +2,22 @@ import runpod
 import io
 import os
 import base64
-from faster_whisper import WhisperModel
 
-from src.audio_subtitler import AudioSubtitler
-
-
+# Lazy imports to speed up startup
 subtitler = None
 MODEL_SIZE_OR_PATH = "large-v3"
 DOWNLOAD_ROOT = "models"
 
 
 def download_model():
+    from faster_whisper import WhisperModel
     WhisperModel(MODEL_SIZE_OR_PATH, device="cpu", download_root=DOWNLOAD_ROOT)
 
 
 def get_subtitler():
     global subtitler
     if subtitler is None:
+        from src.audio_subtitler import AudioSubtitler
         subtitler = AudioSubtitler(
             model_size_or_path=MODEL_SIZE_OR_PATH,
             device="cuda",
@@ -33,22 +32,23 @@ def get_subtitler():
 
 
 def handler(event):
+    """Handler for RunPod serverless."""
     job_input = event.get("input", {})
     
-    # Health check / ping - return immediately
-    if job_input.get("ping"):
-        return {"status": "ok", "model": MODEL_SIZE_OR_PATH}
+    # Health check / ping - return immediately (no model loading)
+    if not job_input or job_input.get("ping"):
+        return {"status": "ok", "message": "ready"}
     
     audio_base64 = job_input.get("audio")
-    format = job_input.get("format", "vtt")
-    
     if not audio_base64:
-        return {"status": "error", "message": "No audio data provided. Please provide 'audio' field with base64 encoded audio data."}
+        return {"status": "error", "message": "No audio provided"}
+    
+    format = job_input.get("format", "vtt")
     
     try:
         audio_data = base64.b64decode(audio_base64)
     except Exception as e:
-        return {"status": "error", "message": f"Failed to decode base64 audio data: {str(e)}"}
+        return {"status": "error", "message": f"Invalid base64: {e}"}
 
     try:
         transcribe_kwargs = {
@@ -65,7 +65,7 @@ def handler(event):
         result = get_subtitler().transcribe(io.BytesIO(audio_data), **transcribe_kwargs)
         return {"status": "ok", "output": result}
     except Exception as e:
-        return {"status": "error", "message": f"Transcription failed: {str(e)}"}
+        return {"status": "error", "message": f"Transcription failed: {e}"}
 
 
 if __name__ == '__main__':
