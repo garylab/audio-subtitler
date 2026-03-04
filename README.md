@@ -11,7 +11,7 @@ Convert audio files to subtitles (VTT, SRT) using Faster-Whisper.
 ## Features
 
 - 🚀 **Full Faster-Whisper support** - All features and parameters from faster-whisper
-- 📝 **Multiple formats** - VTT (WebVTT) and SRT subtitle output
+- 📝 **Multiple formats** - VTT (WebVTT), SRT, and JSON subtitle output
 - 🎯 **Smart auto-detection** - Automatically detects format from file extension
 - 🌍 **Multi-language** - Supports 100+ languages with auto-detection
 - ⚡ **GPU acceleration** - CUDA support for faster transcription
@@ -62,13 +62,15 @@ converter = AudioSubtitler(
     compute_type="int8"
 )
 
-# Transcribe
-result = converter.transcribe("audio.mp3", format="vtt", language="en")
+# Transcribe to VTT (default)
+vtt = converter.transcribe("audio.mp3", format="vtt", language="en")
+print(vtt)  # "WEBVTT\n\n00:00:00.000 --> ..."
 
-# Access results
-print(result["content"])     # Subtitle content
-print(result["format"])      # "vtt" or "srt"
-print(result["word_count"])  # Number of words
+# Transcribe to SRT
+srt = converter.transcribe("audio.mp3", format="srt", language="en")
+
+# Transcribe to JSON (detailed word-level data)
+json_str = converter.transcribe("audio.mp3", format="json", language="en")
 ```
 
 ## API Reference
@@ -87,18 +89,11 @@ Accepts all [faster-whisper WhisperModel](https://github.com/SYSTRAN/faster-whis
 
 Parameters:
 - `audio`: File path (str), file object (BinaryIO), or numpy array
-- `format`: "vtt" or "srt" (default: "vtt")
+- `format`: `"vtt"`, `"srt"`, or `"json"` (default: `"vtt"`)
 - `**kwargs`: All [faster-whisper transcribe](https://github.com/SYSTRAN/faster-whisper#transcribe) parameters
   - `language`, `beam_size`, `vad_parameters`, `word_timestamps`, etc.
 
-Returns:
-```python
-{
-    "content": str,      # Subtitle content
-    "format": str,       # "vtt" or "srt"
-    "word_count": int    # Word count
-}
-```
+Returns: `str` — the subtitle content in the requested format.
 
 ## Docker (GPU only)
 
@@ -117,12 +112,8 @@ Input/Output for RunPod serverless:
   }
 }
 
-// Output
-{
-  "content": "WEBVTT\n\n00:00:00.000 --> ...",
-  "format": "vtt",
-  "word_count": 150
-}
+// Output (string)
+"WEBVTT\n\n00:00:00.000 --> ..."
 ```
 
 ## Output Examples
@@ -147,6 +138,22 @@ Hello, this is a test transcription.
 2
 00:00:03,500 --> 00:00:07,200
 The audio is converted to text with timestamps.
+```
+
+**JSON:**
+```json
+[
+  {
+    "id": 0,
+    "start": 0.0,
+    "end": 3.5,
+    "text": " Hello, this is a test transcription.",
+    "words": [
+      {"start": 0.0, "end": 0.5, "word": " Hello,", "probability": 0.98},
+      ...
+    ]
+  }
+]
 ```
 
 ## Environment Variables
