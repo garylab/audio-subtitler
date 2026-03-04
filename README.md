@@ -6,7 +6,6 @@ Convert audio files to subtitles (VTT, SRT) using Faster-Whisper.
 [![Python Versions](https://img.shields.io/pypi/pyversions/audio-subtitler.svg)](https://pypi.org/project/audio-subtitler/)
 [![Downloads](https://static.pepy.tech/badge/audio-subtitler)](https://pepy.tech/project/audio-subtitler)
 [![Monthly Downloads](https://img.shields.io/pypi/dm/audio-subtitler.svg)](https://pypi.org/project/audio-subtitler/)
-[![Run on RunPod](https://img.shields.io/badge/Run%20on-RunPod-6b3cff?logo=runpod&logoColor=white)](https://runpod.io?ref=hh0mhml0)
 
 ## Features
 
@@ -17,7 +16,6 @@ Convert audio files to subtitles (VTT, SRT) using Faster-Whisper.
 - ⚡ **GPU acceleration** - CUDA support for faster transcription
 - 🎙️ **Voice Activity Detection** - Automatically removes silence
 - 💻 **Simple APIs** - Easy-to-use CLI and Python API
-- 🐳 **Docker GPU support** - Ready for serverless deployment
 
 ## Installation
 
@@ -27,7 +25,6 @@ pip install audio-subtitler
 
 Optional dependencies:
 ```bash
-pip install audio-subtitler[runpod]  # For RunPod serverless
 pip install audio-subtitler[dev]     # For development
 ```
 
@@ -94,27 +91,6 @@ Parameters:
   - `language`, `beam_size`, `vad_parameters`, `word_timestamps`, etc.
 
 Returns: `str` — the subtitle content in the requested format.
-
-## Docker (GPU only)
-
-```bash
-docker-compose -f docker-compose-gpu.yml up
-```
-
-Input/Output for RunPod serverless:
-```json
-// Input
-{
-  "input": {
-    "audio": "<base64_encoded_audio>",
-    "language": "en",
-    "format": "vtt"
-  }
-}
-
-// Output (string)
-"WEBVTT\n\n00:00:00.000 --> ..."
-```
 
 ## Output Examples
 

@@ -31,9 +31,6 @@ audiosubtitler = "src.cli:main"
 audiosub = "src.cli:main"
 
 [project.optional-dependencies]
-runpod = [
-    "runpod>=1.7.0",
-]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
