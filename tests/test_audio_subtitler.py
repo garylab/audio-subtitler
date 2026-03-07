@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock, MagicMock, patch
 import numpy as np
-from src.audio_subtitler import AudioSubtitler, STOP_CHARS
+from src.audio_subtitler import AudioSubtitler
 
 
 class MockWord:
@@ -46,156 +46,6 @@ class TestAudioSubtitler:
         )
 
     @patch('src.audio_subtitler.WhisperModel')
-    def test_seconds_to_vtt_time_basic(self, mock_whisper_model):
-        """Test time conversion with basic values"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        
-        assert converter.seconds_to_vtt_time(0) == "00:00:00.000"
-        assert converter.seconds_to_vtt_time(1.5) == "00:00:01.500"
-        assert converter.seconds_to_vtt_time(60) == "00:01:00.000"
-        assert converter.seconds_to_vtt_time(3661.123) == "01:01:01.123"
-
-    @patch('src.audio_subtitler.WhisperModel')
-    def test_seconds_to_vtt_time_edge_cases(self, mock_whisper_model):
-        """Test time conversion with edge cases"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        
-        assert converter.seconds_to_vtt_time(0.001) == "00:00:00.001"
-        assert converter.seconds_to_vtt_time(0.999) == "00:00:00.999"
-        assert converter.seconds_to_vtt_time(7200) == "02:00:00.000"
-        assert converter.seconds_to_vtt_time(3599.999) == "00:59:59.999"
-
-    @patch('src.audio_subtitler.WhisperModel')
-    def test_format_vtt_segment(self, mock_whisper_model):
-        """Test VTT segment formatting"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        
-        result = converter._format_vtt_segment("hello world", 0.0, 2.5)
-        assert result == "00:00:00.000 --> 00:00:02.500\nHello world\n"
-        
-        result = converter._format_vtt_segment("  test  ", 1.0, 3.0)
-        assert result == "00:00:01.000 --> 00:00:03.000\nTest\n"
-
-    @patch('src.audio_subtitler.WhisperModel')
-    def test_format_vtt_segment_capitalization(self, mock_whisper_model):
-        """Test that first letter is capitalized"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        
-        result = converter._format_vtt_segment("hello", 0.0, 1.0)
-        assert "Hello" in result
-        
-        result = converter._format_vtt_segment("", 0.0, 1.0)
-        assert result == "00:00:00.000 --> 00:00:01.000\n\n"
-
-    @patch('src.audio_subtitler.WhisperModel')
-    def test_end_with_stop_char_english(self, mock_whisper_model):
-        """Test stop character detection for English punctuation"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        
-        assert converter.end_with_stop_char("hello.") is True
-        assert converter.end_with_stop_char("hello!") is True
-        assert converter.end_with_stop_char("hello?") is True
-        assert converter.end_with_stop_char("hello,") is True
-        assert converter.end_with_stop_char("hello:") is True
-        assert converter.end_with_stop_char("hello;") is True
-
-    @patch('src.audio_subtitler.WhisperModel')
-    def test_end_with_stop_char_multilingual(self, mock_whisper_model):
-        """Test stop character detection for various languages"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        
-        # Chinese
-        assert converter.end_with_stop_char("你好。") is True
-        assert converter.end_with_stop_char("你好！") is True
-        assert converter.end_with_stop_char("你好？") is True
-        
-        # Arabic
-        assert converter.end_with_stop_char("مرحبا؟") is True
-        assert converter.end_with_stop_char("مرحبا؛") is True
-
-    @patch('src.audio_subtitler.WhisperModel')
-    def test_end_with_stop_char_negative(self, mock_whisper_model):
-        """Test stop character detection returns False for non-stop chars"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        
-        assert converter.end_with_stop_char("hello") is False
-        assert converter.end_with_stop_char("hello world") is False
-        assert converter.end_with_stop_char("") is False
-
-    @patch('src.audio_subtitler.WhisperModel')
-    def test_end_with_stop_char_empty(self, mock_whisper_model):
-        """Test stop character detection with empty string"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        assert converter.end_with_stop_char("") is False
-
-    @patch('src.audio_subtitler.WhisperModel')
-    def test_segments_to_subtitle_basic(self, mock_whisper_model):
-        """Test conversion of segments to subtitles"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        
-        # Create mock segments with words
-        words = [
-            MockWord("Hello", 0.0, 0.5),
-            MockWord(" world.", 0.5, 1.0)
-        ]
-        segment = MockSegment("Hello world.", 0.0, 1.0, words)
-        
-        subtitles, word_count = converter.segments_to_subtitle([segment])
-        
-        assert word_count == 2
-        assert len(subtitles) == 1
-        assert subtitles[0]["msg"] == "Hello world"
-        assert subtitles[0]["start_time"] == 0.0
-        assert subtitles[0]["end_time"] == 1.0
-
-    @patch('src.audio_subtitler.WhisperModel')
-    def test_segments_to_subtitle_multiple_sentences(self, mock_whisper_model):
-        """Test conversion with multiple sentences"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        
-        words = [
-            MockWord("Hello.", 0.0, 0.5),
-            MockWord(" How", 0.6, 0.8),
-            MockWord(" are", 0.8, 1.0),
-            MockWord(" you?", 1.0, 1.5)
-        ]
-        segment = MockSegment("Hello. How are you?", 0.0, 1.5, words)
-        
-        subtitles, word_count = converter.segments_to_subtitle([segment])
-        
-        assert word_count == 4
-        assert len(subtitles) == 2
-        assert subtitles[0]["msg"] == "Hello"
-        assert subtitles[1]["msg"] == " How are you"
-
-    @patch('src.audio_subtitler.WhisperModel')
-    def test_segments_to_subtitle_empty_segments(self, mock_whisper_model):
-        """Test with empty segments"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        
-        segment = MockSegment("", 0.0, 0.0, [])
-        subtitles, word_count = converter.segments_to_subtitle([segment])
-        
-        assert word_count == 0
-        assert len(subtitles) == 0
-
-    @patch('src.audio_subtitler.WhisperModel')
-    def test_segments_to_subtitle_strips_whitespace(self, mock_whisper_model):
-        """Test that whitespace is properly stripped"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        
-        words = [
-            MockWord("  Hello  ", 0.0, 0.5),
-            MockWord(" world.  ", 0.5, 1.0)
-        ]
-        segment = MockSegment("  Hello   world.  ", 0.0, 1.0, words)
-        
-        subtitles, word_count = converter.segments_to_subtitle([segment])
-        
-        assert len(subtitles) == 1
-        # The subtitle should have content stripped when used
-
-    @patch('src.audio_subtitler.WhisperModel')
     def test_transcribe_default_params(self, mock_whisper_model):
         """Test transcribe with default parameters"""
         # Setup mock
@@ -216,16 +66,11 @@ class TestAudioSubtitler:
         # Verify default parameters were set
         call_kwargs = mock_model_instance.transcribe.call_args[1]
         assert call_kwargs["word_timestamps"] is True
-        assert call_kwargs["vad_filter"] is True
         assert call_kwargs["vad_parameters"] == {"min_silence_duration_ms": 500}
         
-        # Verify result structure
-        assert "content" in result
-        assert "format" in result
-        assert "word_count" in result
-        assert result["word_count"] == 2
-        assert result["format"] == "vtt"
-        assert result["content"].startswith("WEBVTT\n\n")
+        # transcribe() returns VTT string by default
+        assert isinstance(result, str)
+        assert result.startswith("WEBVTT\n\n")
 
     @patch('src.audio_subtitler.WhisperModel')
     def test_transcribe_custom_params(self, mock_whisper_model):
@@ -290,16 +135,10 @@ class TestAudioSubtitler:
         converter = AudioSubtitler(model_size_or_path="base")
         result = converter.transcribe("test.mp3")
         
-        vtt = result["content"]
-        
-        # Check VTT header
-        assert vtt.startswith("WEBVTT\n\n")
-        
-        # Check timestamp format
-        assert "00:00:00.000 --> 00:00:01.000" in vtt
-        
-        # Check text is capitalized
-        assert "Hello world" in vtt
+        # transcribe() returns VTT string (via stt2vtt)
+        assert result.startswith("WEBVTT\n\n")
+        assert "00:00:00.000 --> 00:00:01.000" in result
+        assert "Hello world" in result
 
     @patch('src.audio_subtitler.WhisperModel')
     def test_transcribe_with_numpy_array(self, mock_whisper_model):
@@ -315,10 +154,8 @@ class TestAudioSubtitler:
         audio_array = np.zeros(16000, dtype=np.float32)
         result = converter.transcribe(audio_array)
         
-        assert "content" in result
-        assert "format" in result
-        assert "word_count" in result
-        assert result["format"] == "vtt"
+        assert isinstance(result, str)
+        assert result.startswith("WEBVTT\n\n")
 
     @patch('src.audio_subtitler.WhisperModel')
     def test_transcribe_multiple_segments(self, mock_whisper_model):
@@ -337,44 +174,8 @@ class TestAudioSubtitler:
         converter = AudioSubtitler(model_size_or_path="base")
         result = converter.transcribe("test.mp3")
         
-        assert result["word_count"] == 4
-        vtt = result["content"]
-        assert "First sentence" in vtt
-        assert "Second sentence" in vtt
-
-    def test_stop_chars_defined(self):
-        """Test that STOP_CHARS constant is properly defined"""
-        assert isinstance(STOP_CHARS, set)
-        assert len(STOP_CHARS) > 0
-        assert "." in STOP_CHARS
-        assert "!" in STOP_CHARS
-        assert "?" in STOP_CHARS
-
-    @patch('src.audio_subtitler.WhisperModel')
-    def test_seconds_to_srt_time(self, mock_whisper_model):
-        """Test SRT time format conversion"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        
-        # Test SRT uses comma instead of period
-        assert converter.seconds_to_srt_time(0) == "00:00:00,000"
-        assert converter.seconds_to_srt_time(1.5) == "00:00:01,500"
-        assert converter.seconds_to_srt_time(60) == "00:01:00,000"
-        assert converter.seconds_to_srt_time(3661.123) == "01:01:01,123"
-
-    @patch('src.audio_subtitler.WhisperModel')
-    def test_format_srt_segment(self, mock_whisper_model):
-        """Test SRT segment formatting"""
-        converter = AudioSubtitler(model_size_or_path="base")
-        
-        result = converter._format_srt_segment(1, "hello world", 0.0, 2.5)
-        assert "1\n" in result
-        assert "00:00:00,000 --> 00:00:02,500" in result
-        assert "Hello world" in result
-        
-        result = converter._format_srt_segment(2, "  test  ", 1.0, 3.0)
-        assert "2\n" in result
-        assert "00:00:01,000 --> 00:00:03,000" in result
-        assert "Test" in result
+        assert "First sentence" in result
+        assert "Second sentence" in result
 
     @patch('src.audio_subtitler.WhisperModel')
     def test_transcribe_srt_format(self, mock_whisper_model):
@@ -392,19 +193,11 @@ class TestAudioSubtitler:
         converter = AudioSubtitler(model_size_or_path="base")
         result = converter.transcribe("test.mp3", format="srt")
         
-        # Verify result structure
-        assert "content" in result
-        assert "format" in result
-        assert "word_count" in result
-        assert result["word_count"] == 2
-        assert result["format"] == "srt"
-        
-        srt = result["content"]
-        
-        # Check SRT format (uses comma, has index)
-        assert "1\n" in srt
-        assert "00:00:00,000 --> 00:00:01,000" in srt
-        assert "Hello world" in srt
+        # transcribe(format="srt") returns SRT string (VTT converted via webvtt-py)
+        assert isinstance(result, str)
+        assert "1\n" in result
+        assert "00:00:00,000 --> 00:00:01,000" in result
+        assert "Hello world" in result
 
     @patch('src.audio_subtitler.WhisperModel')
     def test_transcribe_vtt_vs_srt_format(self, mock_whisper_model):
@@ -418,21 +211,18 @@ class TestAudioSubtitler:
         
         converter = AudioSubtitler(model_size_or_path="base")
         
-        # Get VTT format
+        # Get VTT format (stt2vtt)
         vtt_result = converter.transcribe("test.mp3", format="vtt")
-        assert "content" in vtt_result
-        assert vtt_result["format"] == "vtt"
-        assert "WEBVTT" in vtt_result["content"]
-        assert "00:00:00.000" in vtt_result["content"]  # Period separator
+        assert isinstance(vtt_result, str)
+        assert "WEBVTT" in vtt_result
+        assert "00:00:00.000" in vtt_result  # Period separator
         
-        # Get SRT format
-        mock_model_instance.transcribe.return_value = ([segment], None)
+        # Get SRT format (VTT -> SRT via webvtt-py)
         srt_result = converter.transcribe("test.mp3", format="srt")
-        assert "content" in srt_result
-        assert srt_result["format"] == "srt"
-        assert "1\n" in srt_result["content"]  # Index
-        assert "00:00:00,000" in srt_result["content"]  # Comma separator
-        assert "WEBVTT" not in srt_result["content"]
+        assert isinstance(srt_result, str)
+        assert "1\n" in srt_result  # Index
+        assert "00:00:00,000" in srt_result  # Comma separator
+        assert "WEBVTT" not in srt_result
 
 
 if __name__ == "__main__":

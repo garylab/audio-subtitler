@@ -247,6 +247,8 @@ name = "audio-subtitler"
 source = { editable = "." }
 dependencies = [
     { name = "faster-whisper" },
+    { name = "stt2vtt" },
+    { name = "webvtt-py" },
 ]
 
 [package.optional-dependencies]
@@ -268,6 +270,8 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
     { name = "runpod", marker = "extra == 'runpod'", specifier = ">=1.7.0" },
+    { name = "stt2vtt", specifier = ">=0.0.4" },
+    { name = "webvtt-py", specifier = ">=0.5.1" },
 ]
 provides-extras = ["runpod", "dev"]
 
@@ -3242,6 +3246,18 @@ wheels = [
 ]
 
 [[package]]
+name = "stt2vtt"
+version = "0.0.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b4/86/d3968017fbe6ad4f787358b515e0e5d619f658e7ba1f7c48b4a44d2ebbcb/stt2vtt-0.0.4.tar.gz", hash = "sha256:72c2aaa51229a957c66ef19e73af5dcd2518ca69e115b269c2acf85c4abf42e0", size = 80180, upload-time = "2026-03-07T19:20:40.866Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1e/80/53847c49227f3657f27f3c3c455675aea3efb31a2426123c8e966d119511/stt2vtt-0.0.4-py3-none-any.whl", hash = "sha256:21d98b436346f2c3037960a856c7a0f0f9fa8ddd56a91416ff64d349b042fb77", size = 7932, upload-time = "2026-03-07T19:20:39.816Z" },
+]
+
+[[package]]
 name = "sympy"
 version = "1.14.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3861,6 +3877,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/04/e4/120ff3180b0872b1fe6637f6f995bcb009fb5c87d597c1fc21456f50c848/websockets-15.0.1-pp39-pypy39_pp73-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4b826973a4a2ae47ba357e4e82fa44a463b8f168e1ca775ac64521442b19e87f", size = 174150, upload-time = "2025-03-05T20:03:35.757Z" },
     { url = "https://files.pythonhosted.org/packages/cb/c3/30e2f9c539b8da8b1d76f64012f3b19253271a63413b2d3adb94b143407f/websockets-15.0.1-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:21c1fa28a6a7e3cbdc171c694398b6df4744613ce9b36b1a498e816787e28123", size = 176877, upload-time = "2025-03-05T20:03:37.199Z" },
     { url = "https://files.pythonhosted.org/packages/fa/a8/5b41e0da817d64113292ab1f8247140aac61cbf6cfd085d6a0fa77f4984f/websockets-15.0.1-py3-none-any.whl", hash = "sha256:f7a866fbc1e97b5c617ee4116daaa09b722101d4a3c170c787450ba409f9736f", size = 169743, upload-time = "2025-03-05T20:03:39.41Z" },
+]
+
+[[package]]
+name = "webvtt-py"
+version = "0.5.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5e/f6/7c9c964681fb148e0293e6860108d378e09ccab2218f9063fd3eb87f840a/webvtt-py-0.5.1.tar.gz", hash = "sha256:2040dd325277ddadc1e0c6cc66cbc4a1d9b6b49b24c57a0c3364374c3e8a3dc1", size = 55128, upload-time = "2024-05-30T13:40:17.189Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f3/ed/aad7e0f5a462d679f7b4d2e0d8502c3096740c883b5bbed5103146480937/webvtt_py-0.5.1-py3-none-any.whl", hash = "sha256:9d517d286cfe7fc7825e9d4e2079647ce32f5678eb58e39ef544ffbb932610b7", size = 19802, upload-time = "2024-05-30T13:40:14.661Z" },
 ]
 
 [[package]]

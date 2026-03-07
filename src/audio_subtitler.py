@@ -1,20 +1,21 @@
+import io
 import json
 
+import stt2vtt
+import webvtt
 from faster_whisper import WhisperModel
-from typing import BinaryIO, Union, List, Dict, Any, Literal
+from typing import BinaryIO, Union, List, Dict, Literal
 import numpy as np
 
-STOP_CHARS = set(
-    ".!?,:;…‥"
-    "。！？，、；："
-    "।"
-    "܀።፧"
-    "؟؛"
-    "၊။"
-    "⸮⁇⁈⁉"
-)
-
 SubtitleFormat = Literal["vtt", "srt", "json"]
+
+
+def _vtt_to_srt(vtt_content: str) -> str:
+    """Convert WebVTT string to SRT using webvtt-py."""
+    doc = webvtt.WebVTT.from_string(vtt_content)
+    buf = io.StringIO()
+    doc.write(buf, format="srt")
+    return buf.getvalue()
 
 
 class AudioSubtitler:
@@ -31,140 +32,33 @@ class AudioSubtitler:
         kwargs.setdefault("vad_parameters", {"min_silence_duration_ms": 500})
         
         segments, info = self.model.transcribe(audio=audio, **kwargs)
-        
+        segments_list = self._segments_to_stt_json(segments)
+
         # For JSON format, return detailed Whisper segments as JSON string
         if format == "json":
-            segments_list = []
-            for segment in segments:
-                segments_list.append({
-                    "id": segment.id,
-                    "start": segment.start,
-                    "end": segment.end,
-                    "text": segment.text,
-                    "words": [
-                        {"start": w.start, "end": w.end, "word": w.word, "probability": w.probability}
-                        for w in segment.words
-                    ],
-                })
             return json.dumps(segments_list, ensure_ascii=False)
-        
-        subtitles = self.segments_to_subtitle(segments)
-        return self._format_subtitles(subtitles, format)
-    
-    def _format_subtitles(self, subtitles: List[Dict], format: SubtitleFormat) -> str:
-        items = []
-        
-        for idx, subtitle in enumerate(subtitles, start=1):
-            text = subtitle.get("msg")
-            if not text:
-                continue
-            
-            start_time = subtitle.get("start_time")
-            end_time = subtitle.get("end_time")
-            
-            if format == "vtt":
-                items.append(self._format_vtt_segment(text, start_time, end_time))
-            else:
-                items.append(self._format_srt_segment(idx, text, start_time, end_time))
-        
+
+        # VTT via stt2vtt (fast-whisper segments -> WebVTT)
+        vtt_content = stt2vtt(segments_list)
+
         if format == "vtt":
-            return "WEBVTT\n\n" + "\n".join(items)
-        else:
-            return "\n".join(items)
+            return vtt_content
+        # SRT: convert VTT to SRT using webvtt-py
+        return _vtt_to_srt(vtt_content)
 
-    def segments_to_subtitle(self, segments) -> List[Dict]:
-        subtitles = []
-        
-        for segment in segments:
-            words_idx = 0
-            words_len = len(segment.words)
-
-            seg_start = 0
-            seg_end = 0
-            seg_text = ""
-
-            if segment.words:
-                is_segmented = False
-                for word in segment.words:
-                    if not is_segmented:
-                        seg_start = word.start
-                        is_segmented = True
-
-                    seg_end = word.end
-                    seg_text += word.word
-
-                    if self.end_with_stop_char(word.word):
-                        seg_text = seg_text[:-1]
-                        if not seg_text:
-                            continue
-
-                        if seg_start < seg_end and seg_text.strip():
-                            subtitles.append(
-                                {
-                                    "msg": seg_text,
-                                    "start_time": seg_start,
-                                    "end_time": seg_end,
-                                }
-                            )
-
-                        is_segmented = False
-                        seg_text = ""
-
-                    if words_idx == 0 and segment.start < word.start:
-                        seg_start = word.start
-                    if words_idx == (words_len - 1) and segment.end > word.end:
-                        seg_end = word.end
-                    words_idx += 1
-
-            if not seg_text:
-                continue
-
-            if seg_start < seg_end and seg_text.strip():
-                subtitles.append(
-                    {"msg": seg_text, "start_time": seg_start, "end_time": seg_end}
-                )
-
-        return subtitles
-
-
-    def _seconds_to_time(self, seconds: float, separator: str = ".") -> str:
-        hours = int(seconds // 3600)
-        seconds = seconds % 3600
-        minutes = int(seconds // 60)
-        milliseconds = int(seconds * 1000) % 1000
-        seconds = int(seconds % 60)
-        return "{:02d}:{:02d}:{:02d}{}{:03d}".format(
-            hours, minutes, seconds, separator, milliseconds
-        )
-    
-    def seconds_to_vtt_time(self, seconds: float) -> str:
-        return self._seconds_to_time(seconds, ".")
-    
-    def seconds_to_srt_time(self, seconds: float) -> str:
-        return self._seconds_to_time(seconds, ",")
-    
-    def _capitalize_text(self, text: str) -> str:
-        text = text.strip()
-        return text[0].upper() + text[1:] if text else text
-    
-    def _format_vtt_segment(self, text: str, start_time: float, end_time: float) -> str:
-        start_time_str = self.seconds_to_vtt_time(start_time)
-        end_time_str = self.seconds_to_vtt_time(end_time)
-        text = self._capitalize_text(text)
-        return f"{start_time_str} --> {end_time_str}\n{text}\n"
-    
-    def _format_srt_segment(self, index: int, text: str, start_time: float, end_time: float) -> str:
-        start_time_str = self.seconds_to_srt_time(start_time)
-        end_time_str = self.seconds_to_srt_time(end_time)
-        text = self._capitalize_text(text)
-        return f"{index}\n{start_time_str} --> {end_time_str}\n{text}\n"
-
-    def end_with_stop_char(self, text: str) -> bool:
-        if not text:
-            return False
-
-        for c in STOP_CHARS:
-            if text.endswith(c):
-                return True
-        return False
-
+    def _segments_to_stt_json(self, segments) -> List[Dict]:
+        """Build fast-whisper style segment list for stt2vtt (id, start, end, text, words)."""
+        out = []
+        for i, segment in enumerate(segments):
+            out.append({
+                "id": getattr(segment, "id", i),
+                "start": segment.start,
+                "end": segment.end,
+                "text": segment.text,
+                "words": [
+                    {"start": w.start, "end": w.end, "word": w.word}
+                    for w in segment.words
+                    if getattr(w, "word", None) is not None
+                ],
+            })
+        return out
