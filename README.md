@@ -62,13 +62,11 @@ converter = AudioSubtitler(
     compute_type="int8"
 )
 
-# Transcribe
-result = converter.transcribe("audio.mp3", format="vtt", language="en")
+# Transcribe (returns subtitle string directly)
+vtt = converter.transcribe("audio.mp3", format="vtt", language="en")
+print(vtt)  # "WEBVTT\n\n00:00:00.000 --> ..."
 
-# Access results
-print(result["content"])     # Subtitle content
-print(result["format"])      # "vtt" or "srt"
-print(result["word_count"])  # Number of words
+srt = converter.transcribe("audio.mp3", format="srt")
 ```
 
 ## API Reference
@@ -91,14 +89,7 @@ Parameters:
 - `**kwargs`: All [faster-whisper transcribe](https://github.com/SYSTRAN/faster-whisper#transcribe) parameters
   - `language`, `beam_size`, `vad_parameters`, `word_timestamps`, etc.
 
-Returns:
-```python
-{
-    "content": str,      # Subtitle content
-    "format": str,       # "vtt" or "srt"
-    "word_count": int    # Word count
-}
-```
+Returns: **str** — The subtitle content (VTT, SRT, or JSON string depending on `format`).
 
 ## Docker (GPU only)
 
@@ -106,24 +97,32 @@ Returns:
 docker-compose -f docker-compose-gpu.yml up
 ```
 
-Input/Output for RunPod serverless:
-```json
-// Input
-{
-  "input": {
-    "audio": "<base64_encoded_audio>",
-    "language": "en",
-    "format": "vtt"
-  }
-}
+**RunPod serverless**
 
-// Output
+Input (in the job `input`):
+```json
 {
-  "content": "WEBVTT\n\n00:00:00.000 --> ...",
-  "format": "vtt",
-  "word_count": 150
+  "audio": "<base64_encoded_audio>",
+  "format": "vtt"
 }
 ```
+- `audio`: required, base64-encoded audio bytes
+- `format`: optional, `"vtt"` (default), `"srt"`, or `"json"`
+
+Output: the handler **returns the subtitle string directly** (no wrapper). RunPod puts it in the job result’s `output` field, so the response body looks like:
+```json
+{
+  "delayTime": 1119,
+  "executionTime": 499,
+  "id": "...",
+  "output": "WEBVTT\n\n00:00:00.000 --> 00:00:00.280\nHello\n\n...",
+  "status": "COMPLETED",
+  "workerId": "..."
+}
+```
+Use `response["output"]` to get the VTT/SRT/JSON string.
+
+Errors: the handler **raises exceptions** (e.g. no audio, invalid base64, transcription failure). RunPod surfaces these in its error response.
 
 ## Output Examples
 
