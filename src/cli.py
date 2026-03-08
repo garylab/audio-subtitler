@@ -74,6 +74,28 @@ Examples:
     )
     
     parser.add_argument(
+        "--initial-prompt",
+        type=str,
+        default="Hello. How are you? Thanks, bye.",
+        help="Text hint to improve punctuation and style, passed to Whisper (default: 'Hello. How are you? Thanks, bye.'). Use --initial-prompt '' to disable.",
+    )
+    
+    parser.add_argument(
+        "--vad-silence-duration-ms",
+        type=int,
+        default=500,
+        metavar="MS",
+        help="Min silence duration (ms) for VAD segment boundaries. Lower = more segments, more punctuation (default: 500).",
+    )
+    
+    parser.add_argument(
+        "--patience",
+        type=float,
+        default=1.0,
+        help="Beam search patience. Lower = more segment boundaries, more punctuation (default: 1.0). Try 0 for shorter segments.",
+    )
+    
+    parser.add_argument(
         "-d", "--device",
         type=str,
         default="cpu",
@@ -180,8 +202,10 @@ Examples:
             "format": args.format,
             "beam_size": args.beam_size,
             "vad_filter": True,
+            "vad_parameters": {"min_silence_duration_ms": args.vad_silence_duration_ms},
+            "initial_prompt": args.initial_prompt,
+            "patience": args.patience,
         }
-        
         if args.language:
             transcribe_kwargs["language"] = args.language
         

@@ -23,8 +23,8 @@ classifiers = [
 ]
 
 dependencies = [
-    "faster-whisper>=1.0.0",
-    "stt2vtt>=0.0.4",
+    "faster-whisper>=1.2.1",
+    "stt2vtt>=0.0.5",
     "webvtt-py>=0.5.1",
 ]
 

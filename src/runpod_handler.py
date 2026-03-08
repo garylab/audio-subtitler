@@ -50,6 +50,9 @@ def handler(event):
         "format": format,
         "beam_size": int(os.getenv("WHISPER_BEAM_SIZE", "5")),
         "vad_filter": True,
+        "vad_parameters": {"min_silence_duration_ms": int(os.getenv("WHISPER_VAD_SILENCE_MS", "500"))},
+        "initial_prompt": job_input.get("initial_prompt", "Hello. How are you? Thanks, bye."),
+        "patience": float(os.getenv("WHISPER_PATIENCE", "1.0")),
     }
     if format == "json":
         transcribe_kwargs["suppress_tokens"] = []

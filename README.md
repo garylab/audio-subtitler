@@ -48,6 +48,9 @@ audiosubtitler input.mp3 --format srt > output.srt
 
 # Use shorter command
 audiosub input.mp3 -o output.vtt
+
+# Hint punctuation style (helps large-v3 and others output more periods, commas, etc.)
+audiosubtitler input.mp3 -o output.vtt --initial-prompt "Hello. How are you? Thanks."
 ```
 
 ### Python API
@@ -67,7 +70,28 @@ vtt = converter.transcribe("audio.mp3", format="vtt", language="en")
 print(vtt)  # "WEBVTT\n\n00:00:00.000 --> ..."
 
 srt = converter.transcribe("audio.mp3", format="srt")
+
+# Better punctuation: pass a short punctuated phrase as a hint
+vtt = converter.transcribe("audio.mp3", format="vtt", initial_prompt="Hello. How are you? Thanks.")
 ```
+
+## Getting better punctuation (for subtitles)
+
+Larger Whisper models (e.g. large-v3) are more accurate on words but often output **longer segments with less punctuation**. Parameters that affect punctuation and segment boundaries:
+
+| Parameter | Default | Effect |
+|-----------|---------|--------|
+| `--initial-prompt` | `"Hello. How are you? Thanks, bye."` | Hints punctuation style; use `''` to disable. |
+| `--vad-silence-duration-ms` | `500` | Lower = more segment breaks (e.g. `300` or `400`) = more punctuation. |
+| `--patience` | `1.0` | Lower = more segment boundaries (e.g. `0` or `0.5`) = more punctuation. |
+
+Example for more punctuation:
+```bash
+audiosubtitler input.mp3 -o output.vtt --vad-silence-duration-ms 400 --patience 0.5
+```
+
+2. **Post-process with a punctuation restoration model**  
+   For English, you can run the transcript through a dedicated punctuation model (e.g. [rpunct](https://pypi.org/project/rpunct/) or [speechbox](https://pypi.org/project/speechbox/)) and then regenerate VTT/SRT from the punctuated text if your tool supports it.
 
 ## API Reference
 
@@ -156,6 +180,8 @@ The audio is converted to text with timestamps.
 | `WHISPER_DEVICE` | `cpu` | cpu, cuda, auto |
 | `WHISPER_COMPUTE_TYPE` | `int8` | Compute type |
 | `WHISPER_BEAM_SIZE` | `5` | Beam size |
+| `WHISPER_VAD_SILENCE_MS` | `500` | Min silence (ms) for segment boundaries (RunPod). Lower = more punctuation. |
+| `WHISPER_PATIENCE` | `1.0` | Beam search patience (RunPod). Lower = more segment boundaries. |
 
 
 ## License

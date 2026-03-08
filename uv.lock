@@ -265,12 +265,12 @@ runpod = [
 [package.metadata]
 requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.0.0" },
-    { name = "faster-whisper", specifier = ">=1.0.0" },
+    { name = "faster-whisper", specifier = ">=1.2.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
     { name = "runpod", marker = "extra == 'runpod'", specifier = ">=1.7.0" },
-    { name = "stt2vtt", specifier = ">=0.0.4" },
+    { name = "stt2vtt", specifier = ">=0.0.5" },
     { name = "webvtt-py", specifier = ">=0.5.1" },
 ]
 provides-extras = ["runpod", "dev"]
@@ -1406,7 +1406,7 @@ all = [
 
 [[package]]
 name = "faster-whisper"
-version = "1.2.0"
+version = "1.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "av", version = "15.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -1418,9 +1418,8 @@ dependencies = [
     { name = "tokenizers" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/77/c2/72002e5f80e73941de05f7b4347ea183d29f76768978a04acda68401c931/faster-whisper-1.2.0.tar.gz", hash = "sha256:56b20d616a575049a79f33b04f02db0868ce38c5d057a0b816d36ca59a6d2598", size = 1124896, upload-time = "2025-08-06T00:34:10.878Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/da/6d/64cdc135e4195f9473c2e42aa1d2268654be4c289223828eee8e6ba4fc6d/faster_whisper-1.2.0-py3-none-any.whl", hash = "sha256:e5535628fe93b5123029b410fd8edba2d28f8cee9f8fff8119138e5a9d81afbe", size = 1118581, upload-time = "2025-08-06T00:34:09.476Z" },
+    { url = "https://files.pythonhosted.org/packages/05/99/49ee85903dee060d9f08297b4a342e5e0bcfca2f027a07b4ee0a38ab13f9/faster_whisper-1.2.1-py3-none-any.whl", hash = "sha256:79a66ad50688c0b794dd501dc340a736992a6342f7f95e5811be60b5224a26a7", size = 1118909, upload-time = "2025-10-31T11:35:47.794Z" },
 ]
 
 [[package]]
@@ -3247,14 +3246,14 @@ wheels = [
 
 [[package]]
 name = "stt2vtt"
-version = "0.0.4"
+version = "0.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b4/86/d3968017fbe6ad4f787358b515e0e5d619f658e7ba1f7c48b4a44d2ebbcb/stt2vtt-0.0.4.tar.gz", hash = "sha256:72c2aaa51229a957c66ef19e73af5dcd2518ca69e115b269c2acf85c4abf42e0", size = 80180, upload-time = "2026-03-07T19:20:40.866Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e0/bd/cc2c6be2837f31a3fb50fbc7a37050aaa6b8406f04958da2874f30ffa00f/stt2vtt-0.0.5.tar.gz", hash = "sha256:cdae0d27ca9028b66da4658e0820db1397dc02b45422c8db540e3813a5d9fe34", size = 117223, upload-time = "2026-03-08T17:37:11.515Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1e/80/53847c49227f3657f27f3c3c455675aea3efb31a2426123c8e966d119511/stt2vtt-0.0.4-py3-none-any.whl", hash = "sha256:21d98b436346f2c3037960a856c7a0f0f9fa8ddd56a91416ff64d349b042fb77", size = 7932, upload-time = "2026-03-07T19:20:39.816Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/07/5915e03dc0e136dd3853ad3961fa0109570b8188fcbe7115abe8bb0d3d31/stt2vtt-0.0.5-py3-none-any.whl", hash = "sha256:4e5ef6dcf3921967abe88a5a922cf951a6bf9802d8e63937a891b243e0e48d5c", size = 7932, upload-time = "2026-03-08T17:37:10.58Z" },
 ]
 
 [[package]]

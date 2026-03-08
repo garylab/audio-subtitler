@@ -30,7 +30,8 @@ class AudioSubtitler:
     ) -> str:
         kwargs.setdefault("word_timestamps", True)
         kwargs.setdefault("vad_parameters", {"min_silence_duration_ms": 500})
-        
+        # Punctuation/segmentation: initial_prompt, vad_parameters.min_silence_duration_ms,
+        # patience (lower = more boundaries), condition_on_previous_text (True = more continuity).
         segments, info = self.model.transcribe(audio=audio, **kwargs)
         segments_list = self._segments_to_stt_json(segments)
 
