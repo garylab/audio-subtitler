@@ -32,40 +32,31 @@ def get_subtitler():
 
 
 def handler(event):
-    """Handler for RunPod serverless."""
+    """Handler for RunPod serverless. Returns subtitle string (VTT/SRT/JSON). Raises on error."""
     job_input = event.get("input", {})
     
     # Health check / ping - return immediately (no model loading)
     if not job_input or job_input.get("ping"):
-        return {"status": "ok", "message": "ready"}
-    
+        return "ready"
+
     audio_base64 = job_input.get("audio")
     if not audio_base64:
-        return {"status": "error", "message": "No audio provided"}
-    
-    format = job_input.get("format", "vtt")
-    
-    try:
-        audio_data = base64.b64decode(audio_base64)
-    except Exception as e:
-        return {"status": "error", "message": f"Invalid base64: {e}"}
+        raise ValueError("No audio provided")
 
-    try:
-        transcribe_kwargs = {
-            "format": format,
-            "beam_size": int(os.getenv("WHISPER_BEAM_SIZE", "5")),
-            "vad_filter": True,
-        }
-        
-        if format == "json":
-            transcribe_kwargs["suppress_tokens"] = []
-            transcribe_kwargs["condition_on_previous_text"] = False
-            transcribe_kwargs["vad_filter"] = False
-        
-        result = get_subtitler().transcribe(io.BytesIO(audio_data), **transcribe_kwargs)
-        return {"status": "ok", "output": result}
-    except Exception as e:
-        return {"status": "error", "message": f"Transcription failed: {e}"}
+    format = job_input.get("format", "vtt")
+    audio_data = base64.b64decode(audio_base64)
+
+    transcribe_kwargs = {
+        "format": format,
+        "beam_size": int(os.getenv("WHISPER_BEAM_SIZE", "5")),
+        "vad_filter": True,
+    }
+    if format == "json":
+        transcribe_kwargs["suppress_tokens"] = []
+        transcribe_kwargs["condition_on_previous_text"] = False
+        transcribe_kwargs["vad_filter"] = False
+
+    return get_subtitler().transcribe(io.BytesIO(audio_data), **transcribe_kwargs)
 
 
 if __name__ == '__main__':
